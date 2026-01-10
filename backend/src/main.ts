@@ -7,7 +7,15 @@ dotenv.config();
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    app.enableCors(); // Allow frontend access
+    app.enableCors({
+        origin: [
+            'http://localhost:3000',
+            'https://ai-cable-design-validation-23uu.vercel.app',
+            'https://ai-cable-design-validation.vercel.app' // Optional alias
+        ],
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        credentials: true,
+    });
     app.useGlobalPipes(new ValidationPipe());
 
     const port = process.env.PORT || 3001;
