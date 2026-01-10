@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Container, Grid, Typography, Button, IconButton } from '@mui/material';
+import { Box, Container, Grid, Typography, Button, IconButton, CircularProgress } from '@mui/material';
 import InputPanel from '@/components/DesignValidator/InputPanel';
 import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
 import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
@@ -65,7 +65,25 @@ export default function DesignValidatorPage() {
                         <InputPanel onValidate={handleValidate} loading={loading} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 8 }}>
-                        {result ? (
+                        {loading ? (
+                            <Box
+                                display="flex"
+                                flexDirection="column"
+                                justifyContent="center"
+                                alignItems="center"
+                                height={400}
+                                sx={{
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: 4,
+                                    bgcolor: 'rgba(19, 47, 76, 0.4)'
+                                }}
+                            >
+                                <CircularProgress size={60} thickness={4} color="secondary" />
+                                <Typography mt={2} color="text.secondary" sx={{ animation: 'pulse 1.5s infinite' }}>
+                                    Analyzing Compliance...
+                                </Typography>
+                            </Box>
+                        ) : result ? (
                             <ResultsPanel results={result.validation} />
                         ) : (
                             <Box
