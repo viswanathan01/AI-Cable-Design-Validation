@@ -1,31 +1,51 @@
 'use client';
 
-import React from 'react';
-import { Box, Container, Grid, Typography, Button, IconButton, CircularProgress } from '@mui/material';
-import InputPanel from '@/components/DesignValidator/InputPanel';
-import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
-import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
-import { validateDesign, ValidationResponse } from '@/services/api';
+import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
+import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import HistoryIcon from '@mui/icons-material/History';
+import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress } from '@mui/material';
+
+import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
+import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import HistoryIcon from '@mui/icons-material/History';
+import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip } from '@mui/material';
 
 export default function DesignValidatorPage() {
+    const { isLoaded, userId, getToken } = useAuth();
     const [loading, setLoading] = React.useState(false);
     const [result, setResult] = React.useState<ValidationResponse | null>(null);
     const [drawerOpen, setDrawerOpen] = React.useState(false);
+    const [historyOpen, setHistoryOpen] = React.useState(false);
+    const [history, setHistory] = React.useState<any[]>([]);
+
+    if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
+    if (!userId) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><SignIn /></Box>;
 
     const handleValidate = async (data: any) => {
         setLoading(true);
         setResult(null);
         try {
-            const res = await validateDesign(data);
+            const token = await getToken();
+            const res = await validateDesign(data, token || '');
             setResult(res);
-            // Auto-open drawer if low confidence or warnings? Maybe just show chips.
-            // Let's just keep it closed unless user wants to see logic.
         } catch (error) {
             console.error(error);
             alert('Validation Failed. Please check backend connection.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleOpenHistory = async () => {
+        setHistoryOpen(true);
+        try {
+            const token = await getToken();
+            const data = await getValidationHistory(token || '');
+            setHistory(data);
+        } catch (error) {
+            console.error('Failed to fetch history', error);
         }
     };
 
@@ -48,16 +68,22 @@ export default function DesignValidatorPage() {
                             AI-Driven Compliance Engineering
                         </Typography>
                     </Box>
-                    {result && (
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() => setDrawerOpen(true)}
-                            startIcon={<AutoAwesomeIcon />}
-                        >
-                            View AI Reasoning
+                    <Box display="flex" gap={2} alignItems="center">
+                        <Button startIcon={<HistoryIcon />} variant="outlined" onClick={handleOpenHistory}>
+                            History
                         </Button>
-                    )}
+                        {result && (
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => setDrawerOpen(true)}
+                                startIcon={<AutoAwesomeIcon />}
+                            >
+                                View AI Reasoning
+                            </Button>
+                        )}
+                        <UserButton afterSignOutUrl="/" />
+                    </Box>
                 </Box>
 
                 <Grid container spacing={3}>
@@ -106,6 +132,25 @@ export default function DesignValidatorPage() {
                     onClose={() => setDrawerOpen(false)}
                     data={result}
                 />
+
+                <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} fullWidth maxWidth="md">
+                    <DialogTitle>Validation History</DialogTitle>
+                    <List sx={{ maxHeight: 500, overflow: 'auto' }}>
+                        {history.map((record: any) => (
+                            <ListItem key={record._id} divider>
+                                <ListItemText
+                                    primary={new Date(record.createdAt).toLocaleString()}
+                                    secondary={`Input: ${record.inputType === 'structured' ? JSON.stringify(record.inputPayload.structuredData) : record.inputPayload.freeText}`}
+                                />
+                                <Box display="flex" gap={1}>
+                                    <Chip label={`Pass: ${record.statusSummary.passCount}`} color="success" size="small" />
+                                    <Chip label={`Warn: ${record.statusSummary.warnCount}`} color="warning" size="small" />
+                                    <Chip label={`Fail: ${record.statusSummary.failCount}`} color="error" size="small" />
+                                </Box>
+                            </ListItem>
+                        ))}
+                    </List>
+                </Dialog>
             </Container>
         </Box>
     );

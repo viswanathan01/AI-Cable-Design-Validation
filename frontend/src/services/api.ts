@@ -18,9 +18,17 @@ export interface ValidationResult {
     comment: string;
 }
 
-export const validateDesign = async (data: { structuredData?: any; freeText?: string }) => {
-    const response = await axios.post<any>(`${API_BASE_URL}/design/validate`, data);
-    // The backend returns { timestamp, originalInput, result: { ...AI_JSON } }
-    // We want the AI JSON 'result'
+
+export const validateDesign = async (data: { structuredData?: any; freeText?: string }, token: string) => {
+    const response = await axios.post<any>(`${API_BASE_URL}/design/validate`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data.result as ValidationResponse;
+};
+
+export const getValidationHistory = async (token: string) => {
+    const response = await axios.get(`${API_BASE_URL}/design/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
 };
