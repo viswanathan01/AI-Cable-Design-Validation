@@ -19,8 +19,8 @@ export class AIGatewayService {
     this.model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {
-        temperature: 0.2, // Low temp for faster, deterministic output
-        maxOutputTokens: 500, // Limit output size significantly
+        temperature: 0.2,
+        maxOutputTokens: 1500, // Increase slightly to avoid JSON text truncation
         topP: 0.8,
         topK: 40
       }
