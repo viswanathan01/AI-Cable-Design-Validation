@@ -12,7 +12,7 @@ export class DesignValidationService {
         @InjectModel(ValidationResult.name) private validationModel: Model<ValidationResultDocument>
     ) { }
 
-    async processValidation(dto: ValidationRequestDto, userId: string) {
+    async processValidation(dto: ValidationRequestDto, user: { id: string, email?: string, name?: string }) {
         // 1. Normalize Input
         let context = '';
 
@@ -38,7 +38,7 @@ export class DesignValidationService {
         };
 
         const resultDoc = new this.validationModel({
-            userId,
+            user,
             inputType: dto.structuredData ? 'structured' : 'free_text',
             inputPayload: dto,
             extractedFields: aiResponse.fields,
@@ -67,7 +67,7 @@ export class DesignValidationService {
     }
 
     async getHistory(userId: string, limit: number = 10, skip: number = 0) {
-        return this.validationModel.find({ userId })
+        return this.validationModel.find({ 'user.id': userId })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)

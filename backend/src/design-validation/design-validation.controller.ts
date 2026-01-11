@@ -13,11 +13,11 @@ export class DesignValidationController {
         if (!body.structuredData && !body.freeText) {
             throw new BadRequestException('Either structuredData or freeText must be provided');
         }
-        return this.validationService.processValidation(body, req.user.userId);
+        return this.validationService.processValidation(body, req.user);
     }
 
     @Get('history')
     async getHistory(@Req() req: any) {
-        return this.validationService.getHistory(req.user.userId);
+        return this.validationService.getHistory(req.user.id);
     }
 }

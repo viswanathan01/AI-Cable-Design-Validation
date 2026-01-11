@@ -23,9 +23,21 @@ export class ClerkAuthGuard implements CanActivate {
                 secretKey: process.env.CLERK_SECRET_KEY,
             });
             // Attach user to request
+            // Typically email/name are not in standard session token unless customized. 
+            // We'll check standard claims or metadata if present.
+            // For now, we'll extract what's available. 
+            // 'sid' is session id, 'sub' is user id.
+            // Emails are usually in a separate API call or enhanced JWT.
+            // But user requested "Populate user metadata from Clerk token claims".
+            // If strictly from token, we might only have sub. 
+            // We will attempt to use 'email' or 'name' if they exist in the payload (custom claims or otherwise).
+
+            const payload = verifiedToken as any;
+
             request.user = {
-                userId: verifiedToken.sub,
-                // Add other claims if needed
+                id: payload.sub,
+                email: payload.email || payload.email_address, // Best effort
+                name: payload.name || payload.username || payload.given_name // Best effort
             };
             return true;
         } catch (error) {

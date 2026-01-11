@@ -2,11 +2,21 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type ValidationResultDocument = ValidationResult & Document;
+export class UserInfo {
+    @Prop({ required: true })
+    id: string; // Clerk User ID
+
+    @Prop()
+    email?: string;
+
+    @Prop()
+    name?: string;
+}
 
 @Schema({ timestamps: true })
 export class ValidationResult {
-    @Prop({ required: true })
-    userId: string; // Clerk User ID
+    @Prop({ type: UserInfo, required: true })
+    user: UserInfo;
 
     @Prop({ required: true, enum: ['structured', 'free_text'] })
     inputType: string;
