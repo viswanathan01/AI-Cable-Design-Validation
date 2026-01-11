@@ -6,6 +6,9 @@ import Providers from './providers';
 export const metadata: Metadata = {
   title: 'AI Cable Validator',
   description: 'AI-Driven Cable Design Validation System',
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
