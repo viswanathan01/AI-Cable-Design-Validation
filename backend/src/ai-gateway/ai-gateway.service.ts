@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export class AIGatewayService {
   private genAI: GoogleGenerativeAI;
   private model: any;
-  private model: any;
+
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -17,7 +17,7 @@ export class AIGatewayService {
     this.genAI = new GoogleGenerativeAI(apiKey || '');
     // Use gemini-1.5-flash (2.5 does not exist yet and causes 500 errors)
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.2,
         topP: 0.8,
