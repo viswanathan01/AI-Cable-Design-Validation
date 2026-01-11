@@ -2,9 +2,11 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable()
+@Injectable()
 export class AIGatewayService {
     private genAI: GoogleGenerativeAI;
     private model: any;
+    private cache = new Map<string, any>();
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY;
@@ -14,10 +16,18 @@ export class AIGatewayService {
             console.log('AI Gateway initialized with API Key: ' + apiKey.substring(0, 8) + '...');
         }
         this.genAI = new GoogleGenerativeAI(apiKey || '');
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // Use gemini-1.5-flash for lowest latency
+        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     }
 
     async validateDesign(inputContext: string): Promise<any> {
+        // 1. Check Cache
+        const cacheKey = Buffer.from(inputContext).toString('base64');
+        if (this.cache.has(cacheKey)) {
+            console.log('⚡ Served from Cache');
+            return this.cache.get(cacheKey);
+        }
+
         const prompt = `
 You are an AI-assisted Cable Design Review Engineer.
 
@@ -97,7 +107,14 @@ CONFIDENCE RULE:
             console.log('--- AI RAW RESPONSE ---');
             console.log(jsonStr);
             console.log('-----------------------');
-            return JSON.parse(jsonStr);
+            
+            const parsed = JSON.parse(jsonStr);
+            
+            // 2. Save to Cache (Limit size to avoid memory leaks)
+            if (this.cache.size > 100) this.cache.clear();
+            this.cache.set(cacheKey, parsed);
+
+            return parsed;
         } catch (error: any) {
             console.error('AI Processing Error:', error?.message || error);
             const msg = error?.message || 'Unknown Error';
