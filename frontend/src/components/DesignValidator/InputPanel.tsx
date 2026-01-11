@@ -8,9 +8,12 @@ interface InputPanelProps {
     onValidate: (data: any) => void;
     loading: boolean;
     initialData?: any;
+    expanded?: boolean;
+    onToggleExpand?: () => void;
 }
 
 export default function InputPanel({ onValidate, loading, initialData }: InputPanelProps) {
+    // ... existing state ...
     const [tabIndex, setTabIndex] = React.useState(0);
     const [freeText, setFreeText] = React.useState('');
     const [structured, setStructured] = React.useState({

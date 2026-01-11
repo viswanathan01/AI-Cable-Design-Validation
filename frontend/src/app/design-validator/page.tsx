@@ -4,6 +4,7 @@ import React from 'react';
 import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
 import InputPanel from '@/components/DesignValidator/InputPanel';
 import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
+import AIReviewSummary from '@/components/DesignValidator/AIReviewSummary';
 import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
 import { validateDesign, ValidationResponse, getValidationHistory, deleteHistoryItem } from '@/services/api';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -21,6 +22,25 @@ export default function DesignValidatorPage() {
     const [history, setHistory] = React.useState<any[]>([]);
     const [selectedHistoryItem, setSelectedHistoryItem] = React.useState<any | null>(null);
     const [loadedInput, setLoadedInput] = React.useState<any>(null);
+    const [loadingMessage, setLoadingMessage] = React.useState('Analyzing Compliance...');
+
+    // Dynamic loading messages
+    React.useEffect(() => {
+        if (!loading) return;
+        const messages = [
+            'Parsing design parameters...',
+            'Checking against IEC 60502-1...',
+            'Evaluating conductor plausibility...',
+            'Assessing insulation adequacy...',
+            'Generating engineering feedback...'
+        ];
+        let i = 0;
+        const interval = setInterval(() => {
+            setLoadingMessage(messages[i % messages.length]);
+            i++;
+        }, 1500);
+        return () => clearInterval(interval);
+    }, [loading]);
 
     // Initial check while Auth loads
     if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
@@ -128,8 +148,13 @@ export default function DesignValidatorPage() {
 
                 <Grid container spacing={3}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                        <InputPanel onValidate={handleValidate} loading={loading} initialData={loadedInput} />
+                        <InputPanel
+                            onValidate={handleValidate}
+                            loading={loading}
+                            initialData={loadedInput}
+                        />
                     </Grid>
+
                     <Grid size={{ xs: 12, md: 8 }}>
                         {loading ? (
                             <Box
@@ -137,20 +162,23 @@ export default function DesignValidatorPage() {
                                 flexDirection="column"
                                 justifyContent="center"
                                 alignItems="center"
-                                height={400}
+                                height={300}
                                 sx={{
                                     border: '1px solid rgba(255,255,255,0.08)',
                                     borderRadius: 4,
                                     bgcolor: 'rgba(19, 47, 76, 0.4)'
                                 }}
                             >
-                                <CircularProgress size={60} thickness={4} color="secondary" />
-                                <Typography mt={2} color="text.secondary" sx={{ animation: 'pulse 1.5s infinite' }}>
-                                    Analyzing Compliance...
+                                <CircularProgress size={50} thickness={4} color="secondary" />
+                                <Typography mt={3} variant="h6" color="text.secondary" sx={{ animation: 'pulse 1.5s infinite' }}>
+                                    {loadingMessage}
                                 </Typography>
                             </Box>
                         ) : result ? (
-                            <ResultsPanel results={result.validation} />
+                            <Box>
+                                <AIReviewSummary data={result} />
+                                <ResultsPanel results={result.validation} />
+                            </Box>
                         ) : (
                             <Box
                                 display="flex"
@@ -166,7 +194,6 @@ export default function DesignValidatorPage() {
                         )}
                     </Grid>
                 </Grid>
-
                 <ReasoningDrawer
                     open={drawerOpen}
                     onClose={() => setDrawerOpen(false)}
@@ -289,7 +316,7 @@ export default function DesignValidatorPage() {
                         )}
                     </Box>
                 </Dialog>
-            </Container>
-        </Box>
+            </Container >
+        </Box >
     );
 }
