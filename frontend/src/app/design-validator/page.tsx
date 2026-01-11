@@ -1,16 +1,10 @@
-'use client';
 
+import React from 'react';
 import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
 import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HistoryIcon from '@mui/icons-material/History';
 import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress } from '@mui/material';
-
-import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
-import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import HistoryIcon from '@mui/icons-material/History';
-import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip } from '@mui/material';
 
 export default function DesignValidatorPage() {
     const { isLoaded, userId, getToken } = useAuth();
