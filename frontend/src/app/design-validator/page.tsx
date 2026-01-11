@@ -19,7 +19,7 @@ export default function DesignValidatorPage() {
     const [history, setHistory] = React.useState<any[]>([]);
 
     if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
-    if (!userId) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><SignIn /></Box>;
+    if (!userId) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><SignIn routing="hash" /></Box>;
 
     const handleValidate = async (data: any) => {
         setLoading(true);
