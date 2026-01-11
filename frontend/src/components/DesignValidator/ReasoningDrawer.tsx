@@ -2,15 +2,12 @@ import React from 'react';
 import { Drawer, Box, Typography, Divider, List, ListItem, ListItemIcon, ListItemText, Alert, LinearProgress } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import LabelIcon from '@mui/icons-material/Label';
+import { ValidationResponse } from '@/services/api';
 
 interface ReasoningDrawerProps {
     open: boolean;
     onClose: () => void;
-    data: {
-        confidence: { overall: number };
-        assumptions: string[];
-        fields: any;
-    } | null;
+    data: ValidationResponse | null;
 }
 
 export default function ReasoningDrawer({ open, onClose, data }: ReasoningDrawerProps) {

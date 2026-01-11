@@ -1,6 +1,11 @@
+'use client';
 
 import React from 'react';
 import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
+import { Link } from '@mui/material'; // unused but safe to keep if needed, or remove
+import InputPanel from '@/components/DesignValidator/InputPanel';
+import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
+import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
 import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HistoryIcon from '@mui/icons-material/History';
