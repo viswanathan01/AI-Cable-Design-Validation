@@ -17,8 +17,12 @@ export default function DesignValidatorPage() {
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     const [historyOpen, setHistoryOpen] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
+    const [selectedHistoryItem, setSelectedHistoryItem] = React.useState<any | null>(null);
 
+    // Initial check while Auth loads
     if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
+
+    // Auth redirect
     if (!userId) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><SignIn routing="hash" forceRedirectUrl="/design-validator" /></Box>;
 
     const handleValidate = async (data: any) => {
@@ -38,6 +42,7 @@ export default function DesignValidatorPage() {
 
     const handleOpenHistory = async () => {
         setHistoryOpen(true);
+        setSelectedHistoryItem(null); // Reset detail view
         try {
             const token = await getToken();
             const data = await getValidationHistory(token || '');
@@ -131,23 +136,92 @@ export default function DesignValidatorPage() {
                     data={result}
                 />
 
-                <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} fullWidth maxWidth="md">
-                    <DialogTitle>Validation History</DialogTitle>
-                    <List sx={{ maxHeight: 500, overflow: 'auto' }}>
-                        {history.map((record: any) => (
-                            <ListItem key={record._id} divider>
-                                <ListItemText
-                                    primary={new Date(record.createdAt).toLocaleString()}
-                                    secondary={`Input: ${record.inputType === 'structured' ? JSON.stringify(record.inputPayload.structuredData) : record.inputPayload.freeText}`}
-                                />
-                                <Box display="flex" gap={1}>
-                                    <Chip label={`Pass: ${record.statusSummary.passCount}`} color="success" size="small" />
-                                    <Chip label={`Warn: ${record.statusSummary.warnCount}`} color="warning" size="small" />
-                                    <Chip label={`Fail: ${record.statusSummary.failCount}`} color="error" size="small" />
-                                </Box>
-                            </ListItem>
-                        ))}
-                    </List>
+                <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} fullWidth maxWidth="lg">
+                    <DialogTitle>
+                        {selectedHistoryItem ? (
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Button
+                                    onClick={() => setSelectedHistoryItem(null)}
+                                    startIcon={<HistoryIcon />}
+                                    size="small"
+                                >
+                                    Back to List
+                                </Button>
+                                <Typography variant="h6">Validation Details</Typography>
+                            </Box>
+                        ) : (
+                            "Validation History"
+                        )}
+                    </DialogTitle>
+                    <Box p={0}>
+                        {selectedHistoryItem ? (
+                            <Box p={2}>
+                                <Grid container spacing={2}>
+                                    <Grid size={{ xs: 12 }}>
+                                        <Box display="flex" justifyContent="space-between" mb={2}>
+                                            <Typography variant="overline" color="text.secondary">
+                                                {new Date(selectedHistoryItem.createdAt).toLocaleString()}
+                                            </Typography>
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                onClick={() => {
+                                                    setResult(selectedHistoryItem.aiResult);
+                                                    setHistoryOpen(false);
+                                                }}
+                                            >
+                                                Load into Workspace
+                                            </Button>
+                                        </Box>
+                                        <ResultsPanel results={selectedHistoryItem.aiResult.validation} />
+                                    </Grid>
+                                    <Grid size={{ xs: 12 }}>
+                                        <Typography variant="h6" mt={2} gutterBottom>AI Reasoning</Typography>
+                                        <Typography variant="body2" gutterBottom>
+                                            <strong>Confidence:</strong> {(selectedHistoryItem.aiResult.confidence.overall * 100).toFixed(0)}%
+                                        </Typography>
+                                        <Typography variant="subtitle2">Assumptions:</Typography>
+                                        <List dense>
+                                            {selectedHistoryItem.aiResult.assumptions?.map((a: string, i: number) => (
+                                                <ListItem key={i}><ListItemText primary={a} /></ListItem>
+                                            )) || <Typography variant="body2" color="text.secondary">None</Typography>}
+                                        </List>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        ) : (
+                            <List sx={{ maxHeight: 500, overflow: 'auto' }}>
+                                {history.map((record: any) => (
+                                    <ListItem
+                                        key={record._id}
+                                        divider
+                                        component="button"
+                                        onClick={() => setSelectedHistoryItem(record)}
+                                        sx={{
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={new Date(record.createdAt).toLocaleString()}
+                                            secondary={`Input: ${record.inputType === 'structured' ? JSON.stringify(record.inputPayload.structuredData) : record.inputPayload.freeText}`}
+                                            primaryTypographyProps={{ fontWeight: 'bold', color: 'primary.main' }}
+                                            secondaryTypographyProps={{
+                                                noWrap: true,
+                                                sx: { maxWidth: '80%' }
+                                            }}
+                                        />
+                                        <Box display="flex" gap={1}>
+                                            <Chip label={`Pass: ${record.statusSummary.passCount}`} color="success" size="small" />
+                                            <Chip label={`Warn: ${record.statusSummary.warnCount}`} color="warning" size="small" />
+                                            <Chip label={`Fail: ${record.statusSummary.failCount}`} color="error" size="small" />
+                                        </Box>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </Box>
                 </Dialog>
             </Container>
         </Box>

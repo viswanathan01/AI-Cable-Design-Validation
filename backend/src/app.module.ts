@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DesignValidationModule } from './design-validation/design-validation.module';
 import { AIGatewayModule } from './ai-gateway/ai-gateway.module';
 
+import { WebhooksModule } from './webhooks/webhooks.module';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -12,6 +14,7 @@ import { AIGatewayModule } from './ai-gateway/ai-gateway.module';
         MongooseModule.forRoot(process.env.MONGODB_URI!),
         DesignValidationModule,
         AIGatewayModule,
+        WebhooksModule,
     ],
 })
 export class AppModule { }
