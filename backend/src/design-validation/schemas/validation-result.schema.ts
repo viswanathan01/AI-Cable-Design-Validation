@@ -18,6 +18,9 @@ export class ValidationResult {
     @Prop({ type: UserInfo, required: true })
     user: UserInfo;
 
+    @Prop({ default: 'Untitled Validation' })
+    name: string;
+
     @Prop({ required: true, enum: ['structured', 'free_text'] })
     inputType: string;
 

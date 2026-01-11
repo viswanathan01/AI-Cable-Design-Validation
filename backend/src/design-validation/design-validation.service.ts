@@ -44,7 +44,8 @@ export class DesignValidationService {
             extractedFields: aiResponse.fields,
             aiResult: aiResponse,
             statusSummary,
-            latencyMs: latency
+            latencyMs: latency,
+            name: `Validation ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`
         });
 
         // We specifically await the save to ensure data integrity before responding, 
@@ -77,5 +78,13 @@ export class DesignValidationService {
     async deleteHistory(id: string, userId: string) {
         // Ensure user owns the record
         return this.validationModel.findOneAndDelete({ _id: id, 'user.id': userId });
+    }
+
+    async updateHistoryName(id: string, userId: string, name: string) {
+        return this.validationModel.findOneAndUpdate(
+            { _id: id, 'user.id': userId },
+            { $set: { name } },
+            { new: true }
+        );
     }
 }

@@ -38,3 +38,9 @@ export const deleteHistoryItem = async (id: string, token: string) => {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
+
+export const updateHistoryName = async (id: string, name: string, token: string) => {
+    await axios.post(`${API_BASE_URL}/design/history/${id}/name`, { name }, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};

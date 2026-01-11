@@ -8,9 +8,10 @@ interface InputPanelProps {
     onValidate: (data: any) => void;
     loading: boolean;
     initialData?: any;
+    viewOnly?: boolean;
 }
 
-export default function InputPanel({ onValidate, loading, initialData }: InputPanelProps) {
+export default function InputPanel({ onValidate, loading, initialData, viewOnly = false }: InputPanelProps) {
     // ... existing state ...
     const [tabIndex, setTabIndex] = React.useState(0);
     const [freeText, setFreeText] = React.useState('');
@@ -46,7 +47,7 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
     };
 
     return (
-        <Paper sx={{ p: 3, height: '100%' }}>
+        <Paper sx={{ p: 3, height: '100%', position: 'relative' }}>
             <Typography variant="h6" gutterBottom color="primary">
                 Design Inputs
             </Typography>
@@ -64,6 +65,7 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
                         value={structured.standard}
                         onChange={handleStructuredChange}
                         fullWidth variant="outlined"
+                        disabled={viewOnly}
                     />
                     <TextField
                         label="Voltage Rating"
@@ -72,6 +74,7 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
                         onChange={handleStructuredChange}
                         placeholder="e.g. 0.6/1 kV"
                         fullWidth
+                        disabled={viewOnly}
                     />
                     <TextField
                         label="Conductor"
@@ -80,6 +83,7 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
                         onChange={handleStructuredChange}
                         placeholder="e.g. Copper 240mm2 Class 2"
                         fullWidth
+                        disabled={viewOnly}
                     />
                     <TextField
                         label="Insulation"
@@ -88,6 +92,7 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
                         onChange={handleStructuredChange}
                         placeholder="e.g. XLPE"
                         fullWidth
+                        disabled={viewOnly}
                     />
                 </Box>
             ) : (
@@ -98,19 +103,20 @@ export default function InputPanel({ onValidate, loading, initialData }: InputPa
                     placeholder="Paste full cable description here (e.g. '3x240+120 mm2 Cu XLPE/PVC 0.6/1kV IEC 60502-1')"
                     value={freeText}
                     onChange={(e) => setFreeText(e.target.value)}
+                    disabled={viewOnly}
                 />
             )}
 
             <Box mt={3} display="flex" justifyContent="flex-end">
                 <Button
                     variant="contained"
-                    color="primary"
+                    color={viewOnly ? "warning" : "primary"}
                     startIcon={<PlayArrowIcon />}
                     onClick={handleSubmit}
-                    disabled={loading}
+                    disabled={loading || viewOnly}
                     size="large"
                 >
-                    {loading ? 'Validating...' : 'Validate Design'}
+                    {loading ? 'Validating...' : viewOnly ? 'Historical Record' : 'Validate Design'}
                 </Button>
             </Box>
         </Paper>

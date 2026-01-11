@@ -25,4 +25,9 @@ export class DesignValidationController {
     async deleteHistory(@Param('id') id: string, @Req() req: any) {
         return this.validationService.deleteHistory(id, req.user.id);
     }
+
+    @Post('history/:id/name')
+    async updateHistoryName(@Param('id') id: string, @Body('name') name: string, @Req() req: any) {
+        return this.validationService.updateHistoryName(id, req.user.id, name);
+    }
 }
