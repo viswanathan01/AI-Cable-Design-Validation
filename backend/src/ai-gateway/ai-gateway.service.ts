@@ -17,7 +17,7 @@ export class AIGatewayService {
     this.genAI = new GoogleGenerativeAI(apiKey || '');
     // Use gemini-1.5-flash for lowest latency
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.2,
         maxOutputTokens: 1500, // Increase slightly to avoid JSON text truncation
