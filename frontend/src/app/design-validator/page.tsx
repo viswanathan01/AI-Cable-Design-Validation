@@ -4,13 +4,17 @@ import React from 'react';
 import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
 import InputPanel from '@/components/DesignValidator/InputPanel';
 import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
-import { updateHistoryName } from '@/services/api';
+import AIReviewSummary from '@/components/DesignValidator/AIReviewSummary';
+import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
+import { validateDesign, ValidationResponse, getValidationHistory, deleteHistoryItem, updateHistoryName } from '@/services/api';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import HistoryIcon from '@mui/icons-material/History';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { Input, Tooltip } from '@mui/material';
-
-// ... existing imports ...
+import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress, Paper, Input, Tooltip } from '@mui/material';
 
 export default function DesignValidatorPage() {
     const { isLoaded, userId, getToken } = useAuth();
@@ -28,9 +32,29 @@ export default function DesignValidatorPage() {
     const [editingId, setEditingId] = React.useState<string | null>(null);
     const [editNameValue, setEditNameValue] = React.useState('');
 
-    // ... useEffect ...
+    // Dynamic loading messages
+    React.useEffect(() => {
+        if (!loading) return;
+        const messages = [
+            'Parsing design parameters...',
+            'Checking against IEC 60502-1...',
+            'Evaluating conductor plausibility...',
+            'Assessing insulation adequacy...',
+            'Generating engineering feedback...'
+        ];
+        let i = 0;
+        const interval = setInterval(() => {
+            setLoadingMessage(messages[i % messages.length]);
+            i++;
+        }, 1500);
+        return () => clearInterval(interval);
+    }, [loading]);
 
-    // ... auth checks ...
+    // Initial check while Auth loads
+    if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
+
+    // Auth redirect
+    if (!userId) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><SignIn routing="hash" forceRedirectUrl="/design-validator" /></Box>;
 
     const handleValidate = async (data: any) => {
         setLoading(true);
@@ -48,7 +72,17 @@ export default function DesignValidatorPage() {
         }
     };
 
-    // ... handleOpenHistory ...
+    const handleOpenHistory = async () => {
+        setHistoryOpen(true);
+        setSelectedHistoryItem(null); // Reset detail view
+        try {
+            const token = await getToken();
+            const data = await getValidationHistory(token || '');
+            setHistory(data);
+        } catch (error) {
+            console.error('Failed to fetch history', error);
+        }
+    };
 
     const handleUpdateName = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -83,7 +117,19 @@ export default function DesignValidatorPage() {
     };
 
     const handleDeleteHistory = async (id: string, e: React.MouseEvent) => {
-        // ... existing implementation ...
+        e.stopPropagation(); // Prevent opening the detail view
+        if (!confirm('Are you sure you want to delete this history item?')) return;
+
+        try {
+            const token = await getToken();
+            await deleteHistoryItem(id, token || '');
+            // Refresh local list
+            setHistory(prev => prev.filter(item => item._id !== id));
+            if (selectedHistoryItem?._id === id) setSelectedHistoryItem(null);
+        } catch (error) {
+            console.error('Failed to delete history item', error);
+            alert('Failed to delete item.');
+        }
     };
 
     const handleLoadWorkspace = (item: any) => {
