@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Drawer, Box, Typography, Divider, List, ListItem, ListItemIcon, ListItemText, Alert, LinearProgress } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
