@@ -9,6 +9,7 @@ import { validateDesign, ValidationResponse, getValidationHistory, deleteHistory
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HistoryIcon from '@mui/icons-material/History';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress, Paper } from '@mui/material';
 
 export default function DesignValidatorPage() {
@@ -96,6 +97,18 @@ export default function DesignValidatorPage() {
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2} alignItems="center">
+                        {result && (
+                            <Button
+                                variant="outlined"
+                                startIcon={<AddIcon />}
+                                onClick={() => {
+                                    setResult(null);
+                                    setLoadedInput(null);
+                                }}
+                            >
+                                New Validation
+                            </Button>
+                        )}
                         <Button startIcon={<HistoryIcon />} variant="outlined" onClick={handleOpenHistory}>
                             History
                         </Button>
