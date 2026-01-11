@@ -15,11 +15,14 @@ export class AIGatewayService {
       console.log('AI Gateway initialized with API Key: ' + apiKey.substring(0, 8) + '...');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    // Use gemini-1.5-flash for lowest latency with JSON mode enforced
+    // Use gemini-1.5-flash for lowest latency
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
-        responseMimeType: "application/json"
+        temperature: 0.2, // Low temp for faster, deterministic output
+        maxOutputTokens: 500, // Limit output size significantly
+        topP: 0.8,
+        topK: 40
       }
     });
   }
@@ -32,41 +35,40 @@ export class AIGatewayService {
       return this.cache.get(cacheKey);
     }
 
+    // Optimized Prompt for Speed
     const prompt = `
-Act as a Senior Cable Engineer. Validate strictly against IEC 60502-1 (LV) or 60502-2 (MV).
-Reason about the input. Do not behave like a simple lookup table.
+Role: Cable Design Validation (IEC 60502).
+Input: ${inputContext}
 
-INPUT:
-${inputContext}
+Task: Validate voltage, conductor (CSA/Class/Material), insulation (Type/Thickness).
+Rules:
+1. IEC 60502-1 (LV) default.
+2. Status: PASS (compliant), WARN (inferred/borderline), FAIL (unsafe).
+3. Brevity is critical.
+4. JSON ONLY.
 
-Ref_Standards:
-- LV (0.6/1kV): IEC 60502-1
-- MV (3.6/6kV+): IEC 60502-2
-
-Validation_Logic:
-- Conductor: Class 1/2/5/6 check.
-- Insulation: Thickness vs Voltage check.
-- Armour/Sheath: Suitability check.
-
-Output_Format: JSON ONLY.
+Output Schema:
 {
-  "fields": { "standard": "...", "voltage": "...", "conductor_material": "...", "conductor_class": "...", "csa": "...", "insulation_material": "...", "insulation_thickness": "..." },
-  "validation": [ { "field": "...", "status": "PASS|WARN|FAIL", "expected": "...", "comment": "..." } ],
+  "fields": { "standard": "...", "voltage": "...", "csa": "...", "insulation_thickness": "..." },
+  "validation": [
+    { "field": "...", "status": "PASS|WARN|FAIL", "expected": "...", "comment": "..." }
+  ],
   "confidence": { "overall": 0.0-1.0 },
   "assumptions": ["..."]
 }
 
-Status_Logc:
-PASS: Explicitly compliant.
-WARN: Inferred, borderline, or ambiguous.
-FAIL: Impossible or clearly unsafe.
+Speed Constraints:
+- For PASS: Comment MUST be < 5 words (e.g. "Compliant", "Standard value").
+- For WARN/FAIL: concise explanation.
 `;
 
     try {
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      const jsonStr = response.text(); // JSON Mode ensures pure JSON
+      const text = response.text();
 
+      // Clean up markdown if Gemini adds it
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
       console.log('--- AI RAW RESPONSE ---');
       console.log(jsonStr);
       console.log('-----------------------');
