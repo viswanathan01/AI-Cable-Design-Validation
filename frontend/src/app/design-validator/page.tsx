@@ -340,9 +340,6 @@ export default function DesignValidatorPage() {
                                             <Typography variant="caption" color="text.secondary">
                                                 {new Date(record.createdAt).toLocaleString()}
                                             </Typography>
-                                            <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: '90%', mt: 0.5 }}>
-                                                Input: {record.inputType === 'structured' ? JSON.stringify(record.inputPayload.structuredData) : record.inputPayload.freeText}
-                                            </Typography>
                                         </Box>
                                     </ListItem>
                                 ))}
