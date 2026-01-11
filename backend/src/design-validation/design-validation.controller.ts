@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get, Delete, Param } from '@nestjs/common';
 import { DesignValidationService } from './design-validation.service';
 import { ValidationRequestDto } from './dto/validation-request.dto';
 import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
@@ -19,5 +19,10 @@ export class DesignValidationController {
     @Get('history')
     async getHistory(@Req() req: any) {
         return this.validationService.getHistory(req.user.id);
+    }
+
+    @Delete('history/:id')
+    async deleteHistory(@Param('id') id: string, @Req() req: any) {
+        return this.validationService.deleteHistory(id, req.user.id);
     }
 }

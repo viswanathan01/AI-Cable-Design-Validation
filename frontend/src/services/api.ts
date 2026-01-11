@@ -32,3 +32,9 @@ export const getValidationHistory = async (token: string) => {
     });
     return response.data;
 };
+
+export const deleteHistoryItem = async (id: string, token: string) => {
+    await axios.delete(`${API_BASE_URL}/design/history/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};

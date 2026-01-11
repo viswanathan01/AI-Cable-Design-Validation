@@ -5,9 +5,10 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 interface InputPanelProps {
     onValidate: (data: any) => void;
     loading: boolean;
+    initialData?: any;
 }
 
-export default function InputPanel({ onValidate, loading }: InputPanelProps) {
+export default function InputPanel({ onValidate, loading, initialData }: InputPanelProps) {
     const [tabIndex, setTabIndex] = React.useState(0);
     const [freeText, setFreeText] = React.useState('');
     const [structured, setStructured] = React.useState({
@@ -16,6 +17,18 @@ export default function InputPanel({ onValidate, loading }: InputPanelProps) {
         insulation: '',
         standard: 'IEC 60502-1'
     });
+
+    React.useEffect(() => {
+        if (initialData) {
+            if (initialData.structuredData) {
+                setTabIndex(0);
+                setStructured(initialData.structuredData);
+            } else if (initialData.freeText) {
+                setTabIndex(1);
+                setFreeText(initialData.freeText);
+            }
+        }
+    }, [initialData]);
 
     const handleStructuredChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setStructured({ ...structured, [e.target.name]: e.target.value });

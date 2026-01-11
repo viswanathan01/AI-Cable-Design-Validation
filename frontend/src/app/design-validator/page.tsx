@@ -5,10 +5,11 @@ import { useAuth, UserButton, SignIn } from '@clerk/nextjs';
 import InputPanel from '@/components/DesignValidator/InputPanel';
 import ResultsPanel from '@/components/DesignValidator/ResultsPanel';
 import ReasoningDrawer from '@/components/DesignValidator/ReasoningDrawer';
-import { validateDesign, ValidationResponse, getValidationHistory } from '@/services/api';
+import { validateDesign, ValidationResponse, getValidationHistory, deleteHistoryItem } from '@/services/api';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HistoryIcon from '@mui/icons-material/History';
-import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { Dialog, DialogTitle, List, ListItem, ListItemText, Chip, Box, Container, Grid, Typography, Button, IconButton, CircularProgress, Paper } from '@mui/material';
 
 export default function DesignValidatorPage() {
     const { isLoaded, userId, getToken } = useAuth();
@@ -18,6 +19,7 @@ export default function DesignValidatorPage() {
     const [historyOpen, setHistoryOpen] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
     const [selectedHistoryItem, setSelectedHistoryItem] = React.useState<any | null>(null);
+    const [loadedInput, setLoadedInput] = React.useState<any>(null);
 
     // Initial check while Auth loads
     if (!isLoaded) return <Box display="flex" justifyContent="center" height="100vh" alignItems="center"><CircularProgress /></Box>;
@@ -50,6 +52,28 @@ export default function DesignValidatorPage() {
         } catch (error) {
             console.error('Failed to fetch history', error);
         }
+    };
+
+    const handleDeleteHistory = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent opening the detail view
+        if (!confirm('Are you sure you want to delete this history item?')) return;
+
+        try {
+            const token = await getToken();
+            await deleteHistoryItem(id, token || '');
+            // Refresh local list
+            setHistory(prev => prev.filter(item => item._id !== id));
+            if (selectedHistoryItem?._id === id) setSelectedHistoryItem(null);
+        } catch (error) {
+            console.error('Failed to delete history item', error);
+            alert('Failed to delete item.');
+        }
+    };
+
+    const handleLoadWorkspace = (item: any) => {
+        setResult(item.aiResult);
+        setLoadedInput(item.inputPayload); // Pass input payload to InputPanel
+        setHistoryOpen(false);
     };
 
     return (
@@ -91,7 +115,7 @@ export default function DesignValidatorPage() {
 
                 <Grid container spacing={3}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                        <InputPanel onValidate={handleValidate} loading={loading} />
+                        <InputPanel onValidate={handleValidate} loading={loading} initialData={loadedInput} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 8 }}>
                         {loading ? (
@@ -158,20 +182,41 @@ export default function DesignValidatorPage() {
                             <Box p={2}>
                                 <Grid container spacing={2}>
                                     <Grid size={{ xs: 12 }}>
-                                        <Box display="flex" justifyContent="space-between" mb={2}>
-                                            <Typography variant="overline" color="text.secondary">
-                                                {new Date(selectedHistoryItem.createdAt).toLocaleString()}
-                                            </Typography>
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                onClick={() => {
-                                                    setResult(selectedHistoryItem.aiResult);
-                                                    setHistoryOpen(false);
-                                                }}
-                                            >
-                                                Load into Workspace
-                                            </Button>
+                                        <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
+                                            <Box flex={1}>
+                                                <Typography variant="overline" color="text.secondary">
+                                                    {new Date(selectedHistoryItem.createdAt).toLocaleString()}
+                                                </Typography>
+                                                <Box mt={1}>
+                                                    <Typography variant="subtitle2" color="primary">Original Input:</Typography>
+                                                    <Paper variant="outlined" sx={{ p: 1.5, mt: 0.5, bgcolor: 'rgba(0,0,0,0.2)' }}>
+                                                        <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                                                            {selectedHistoryItem.inputType === 'structured'
+                                                                ? JSON.stringify(selectedHistoryItem.inputPayload.structuredData, null, 2)
+                                                                : selectedHistoryItem.inputPayload.freeText
+                                                            }
+                                                        </Typography>
+                                                    </Paper>
+                                                </Box>
+                                            </Box>
+                                            <Box display="flex" gap={1} ml={2}>
+                                                <Button
+                                                    variant="outlined"
+                                                    color="error"
+                                                    size="small"
+                                                    startIcon={<DeleteIcon />}
+                                                    onClick={(e) => handleDeleteHistory(selectedHistoryItem._id, e)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                                <Button
+                                                    variant="contained"
+                                                    size="small"
+                                                    onClick={() => handleLoadWorkspace(selectedHistoryItem)}
+                                                >
+                                                    Load into Workspace
+                                                </Button>
+                                            </Box>
                                         </Box>
                                         <ResultsPanel results={selectedHistoryItem.aiResult.validation} />
                                     </Grid>
@@ -195,12 +240,13 @@ export default function DesignValidatorPage() {
                                     <ListItem
                                         key={record._id}
                                         divider
-                                        component="button"
+                                        component="div"
                                         onClick={() => setSelectedHistoryItem(record)}
                                         sx={{
                                             width: '100%',
-                                            textAlign: 'left',
-                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }
                                         }}
                                     >
                                         <ListItemText
@@ -212,10 +258,17 @@ export default function DesignValidatorPage() {
                                                 sx: { maxWidth: '80%' }
                                             }}
                                         />
-                                        <Box display="flex" gap={1}>
+                                        <Box display="flex" gap={1} alignItems="center">
                                             <Chip label={`Pass: ${record.statusSummary.passCount}`} color="success" size="small" />
                                             <Chip label={`Warn: ${record.statusSummary.warnCount}`} color="warning" size="small" />
                                             <Chip label={`Fail: ${record.statusSummary.failCount}`} color="error" size="small" />
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={(e) => handleDeleteHistory(record._id, e)}
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
                                         </Box>
                                     </ListItem>
                                 ))}

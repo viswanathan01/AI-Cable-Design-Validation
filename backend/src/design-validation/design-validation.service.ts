@@ -73,4 +73,9 @@ export class DesignValidationService {
             .limit(limit)
             .exec();
     }
+
+    async deleteHistory(id: string, userId: string) {
+        // Ensure user owns the record
+        return this.validationModel.findOneAndDelete({ _id: id, 'user.id': userId });
+    }
 }
