@@ -26,7 +26,7 @@ export default function LandingPage() {
           <Box display="flex" alignItems="center" gap={2}>
             <Image src="/logo.png" alt="Logo" width={40} height={40} />
             <Typography variant="h6" fontWeight="bold" sx={{ letterSpacing: 1 }}>
-              VITAL
+              VN
             </Typography>
           </Box>
           <Link href="/design-validator" passHref>
@@ -93,14 +93,7 @@ export default function LandingPage() {
                     Launch Validator
                   </Button>
                 </Link>
-                <Button
-                  variant="text"
-                  size="large"
-                  color="secondary"
-                  sx={{ px: 3 }}
-                >
-                  Learn More
-                </Button>
+
               </Stack>
             </Box>
           </Grid>
