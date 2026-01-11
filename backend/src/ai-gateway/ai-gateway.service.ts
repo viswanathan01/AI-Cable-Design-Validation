@@ -15,8 +15,13 @@ export class AIGatewayService {
       console.log('AI Gateway initialized with API Key: ' + apiKey.substring(0, 8) + '...');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    // Use gemini-1.5-flash for lowest latency
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use gemini-1.5-flash for lowest latency with JSON mode enforced
+    this.model = this.genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    });
   }
 
   async validateDesign(inputContext: string): Promise<any> {
@@ -28,81 +33,40 @@ export class AIGatewayService {
     }
 
     const prompt = `
-You are an AI-assisted Cable Design Review Engineer.
+Act as a Senior Cable Engineer. Validate strictly against IEC 60502-1 (LV) or 60502-2 (MV).
+Reason about the input. Do not behave like a simple lookup table.
 
-IMPORTANT ROLE DEFINITION:
-- You are NOT a deterministic compliance engine.
-- You do NOT perform table lookups.
-- You perform probabilistic engineering review similar to a senior human engineer.
-- Your job is to assess plausibility, risk, and ambiguity.
-
-INPUT DATA:
+INPUT:
 ${inputContext}
 
-DECISION PRINCIPLES (STRICT):
-1. Never assume missing values as compliant.
-2. If a value is close to commonly referenced nominal practice, mark WARN — not FAIL.
-3. FAIL is only for values that are clearly unsafe, implausible, or far below typical engineering expectations.
-4. If you infer anything, it MUST appear in the assumptions list.
-5. Never reference IEC table numbers, clause numbers, or exact limits.
-6. Use probabilistic language: "typically", "commonly", "often", "may be borderline".
+Ref_Standards:
+- LV (0.6/1kV): IEC 60502-1
+- MV (3.6/6kV+): IEC 60502-2
 
-ATTRIBUTE STATUS RULES:
-- PASS:
-  - Explicitly stated
-  - Clearly reasonable for the context
-- WARN:
-  - Missing but inferred
-  - Borderline numeric values
-  - Ambiguous interpretation
-- FAIL:
-  - Physically implausible
-  - Clearly insufficient by common engineering judgment
+Validation_Logic:
+- Conductor: Class 1/2/5/6 check.
+- Insulation: Thickness vs Voltage check.
+- Armour/Sheath: Suitability check.
 
-OUTPUT FORMAT RULES:
-- STRICT JSON ONLY
-- No markdown
-- No prose outside JSON
-
-REQUIRED JSON SCHEMA:
+Output_Format: JSON ONLY.
 {
-  "fields": {
-    "standard": string | null,
-    "voltage": string | null,
-    "conductor_material": string | null,
-    "conductor_class": string | null,
-    "csa": number | null,
-    "insulation_material": string | null,
-    "insulation_thickness": number | null
-  },
-  "validation": [
-    {
-      "field": string,
-      "status": "PASS" | "WARN" | "FAIL",
-      "expected": string,
-      "comment": string
-    }
-  ],
-  "confidence": {
-    "overall": number
-  },
-  "assumptions": string[]
+  "fields": { "standard": "...", "voltage": "...", "conductor_material": "...", "conductor_class": "...", "csa": "...", "insulation_material": "...", "insulation_thickness": "..." },
+  "validation": [ { "field": "...", "status": "PASS|WARN|FAIL", "expected": "...", "comment": "..." } ],
+  "confidence": { "overall": 0.0-1.0 },
+  "assumptions": ["..."]
 }
 
-CONFIDENCE RULE:
-- 0.9+ only if all key parameters are explicit and non-borderline
-- 0.6–0.8 if assumptions or WARNs exist
-- <0.6 only if major ambiguity exists
+Status_Logc:
+PASS: Explicitly compliant.
+WARN: Inferred, borderline, or ambiguous.
+FAIL: Impossible or clearly unsafe.
 `;
-
 
     try {
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
+      const jsonStr = response.text(); // JSON Mode ensures pure JSON
 
-      // Clean up markdown if Gemini adds it
-      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
       console.log('--- AI RAW RESPONSE ---');
       console.log(jsonStr);
       console.log('-----------------------');
