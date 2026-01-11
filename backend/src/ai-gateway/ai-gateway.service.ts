@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export class AIGatewayService {
   private genAI: GoogleGenerativeAI;
   private model: any;
-  private cache = new Map<string, any>();
+  private model: any;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -15,12 +15,11 @@ export class AIGatewayService {
       console.log('AI Gateway initialized with API Key: ' + apiKey.substring(0, 8) + '...');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    // Use gemini-1.5-flash for lowest latency
+    // Use gemini-1.5-flash (2.5 does not exist yet and causes 500 errors)
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 1500, // Increase slightly to avoid JSON text truncation
         topP: 0.8,
         topK: 40
       }
@@ -28,12 +27,7 @@ export class AIGatewayService {
   }
 
   async validateDesign(inputContext: string): Promise<any> {
-    // 1. Check Cache
-    const cacheKey = Buffer.from(inputContext).toString('base64');
-    if (this.cache.has(cacheKey)) {
-      console.log('⚡ Served from Cache');
-      return this.cache.get(cacheKey);
-    }
+    // Cache removed as requested to ensure fresh results
 
     // Optimized Prompt for Speed
     const prompt = `
@@ -74,11 +68,6 @@ Speed Constraints:
       console.log('-----------------------');
 
       const parsed = JSON.parse(jsonStr);
-
-      // 2. Save to Cache (Limit size to avoid memory leaks)
-      if (this.cache.size > 100) this.cache.clear();
-      this.cache.set(cacheKey, parsed);
-
       return parsed;
     } catch (error: any) {
       console.error('AI Processing Error:', error?.message || error);
